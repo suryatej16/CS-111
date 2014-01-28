@@ -1,0 +1,1 @@
+Link for the specifications to the lab: http://www.read.cs.ucla.edu/111/lab2

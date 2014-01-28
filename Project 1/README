@@ -1,0 +1,53 @@
+This is a skeleton for CS 111 Lab 1.
+
+Sarah Wong
+604043984
+&
+Surya Mukkamalla 
+104008054
+
+STRUCT IMPLEMENTATION
+Our command_stream is made of 2 arrays: one is a char**, made to hold the string
+s of commands parsed from the file. The command structure has not been filled ou
+t yet, so it only holds strings to be parsed into the command structure. The oth
+er array, command_t*, will hold commands when they have been parsed by read_comm
+and_stream. The structure also holds some ints to keep track of the array size a
+nd the position to point to which string is next to be parsed into a command.
+
+MAKE_COMMAND_STREAM IMPLEMENTATION
+  The function will read in the whole file as a char*, allocating more space
+as it goes. Then it will go char by char looking for ordinary/special tokens,
+spaces,tabs, or new lines. It will ignore spaces/tabs/characters, check the
+left and right side for &&/||/|/;/</>. When it reaches a newline character
+it uses a helper function to determine if this is truly the end of a command,
+or merely spacing trickery. If it is a full command, we allocate more space
+for the full_commands[][] in the command_stream to give to read_command_stream
+and then given a start_ptr and to the end of the newline, it shall read in the
+full command to save for the next function.
+  This function turns multiple whitespaces in a row to one white space.
+  It also gets rid of newlines in the middle of commands.
+  A semicolon/n is considered a full command.
+  A command like " a ; b" is considered the same command, of type SEQUENCE
+
+READ_COMMAND_STREAM IMPLEMENTATION
+  The function uses several helper functions to parse the char* into commands. p
+arse_command_stream(char*) does most of the work, and is called recursively to m
+ake the command tree. It searches in reverse order of priority, to construct the
+lower leaves of the tree first. So it looks for SIMPLE, SEQUENCE, AND/OR, PIPE, 
+IN/OUT, and finally SUBSHELL. 
+
+  If a token is found, first check that it is not part of a subshell command, an
+d then split the string into the left and right side of the command. The left is
+ inserted in u.command[0], and right is in the second box, while recursively cal
+ling the parse_command_stream function on left and right. A second helper functi
+on, read_part_command, simply creates substrings with start and end ptrs, also r
+emoving preceding and trailing whitespace. 
+
+EXECUTE_COMMAND implementation:
+For each command passed in to execute_command, we separate it into the different command types and pass it into their own functions to execute. Every command  will eventually be broken down into a SIMPLE_COMMAND and executed. To execute a simple command, we create a child process and invoke execvp(). For pipe commands, we create two child processes from the same parent and use a pipe to redirect the output of the first part of the pipe as the input of the second part of the pipe. AND/OR commands are executed based on their given parameters. 
+
+EXECUTE_TIMETRAVEL IMPLEMENTATION:
+For 1c, we created a new struct in command_internals: command_node, which are nodes that will act as a queue (linked list) so we can make a dependent cmd
+list and independent cmd list.We went into main, and changed it so if time-travel was true, it would access a func "execute_timetravel" that gets passed the whole command stream, instead of one command at a time. Given the command_stream, we go through it command by command, sorting into an independent or dependent list, for example checking for '>' means that a file is being changed. Any cmd that uses that file is now dependent. After going through the command stream, we have two linked lists called the no_dependency_head and dependency_head. 
+Go through the independent list first: fork and run the cmd in a child, while setting the pid and going to the next cmd in the list in the parent.
+Go through the dependent list: Check the dependent node to see if it has prior dependencies that have not started running yet (meaning its pid has not been set). If the prior dependencies have not started, push this dependent node to the back of the list and continue to the next node. If the dependent node's prior dependencies have all started, fork, and in the child process check that the prior dependencies have FINISHED (waitpid) and then execute dependent node cmd. In the parent, set the dependent node pid and go to the next dependent node.

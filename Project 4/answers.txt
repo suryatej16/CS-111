@@ -1,0 +1,103 @@
+# Fill in your name, student ID, and email address in this file.
+# If you are working in a team, fill out the information for both team 
+# members.
+
+# SUBMIT THE LAB ONLY ONCE (from only one partner). This file will be
+# automatically parsed in order to give both team members credit for the
+# lab.
+
+# You need to fill in the EXERCISE sections describing your solutions
+# for Tasks 1, 2, and 3, as well as write the corresponding code.
+# If you did one or more extra credit problems, indicate which one in the
+# appropriate section below (remove the # sign first). If you have any other
+# information you'd like us to know, please add it at the end of the file.
+
+# Partner 1
+Name: Suryatej Mukkamalla
+Student ID: 104008054
+Email: suryatej16@gmail.com
+
+# Partner 2 (if you're working in a team)
+Name: Sarah Wong
+Student ID: 604043984
+Email: kitsarwong@gmail.com
+
+# EXERCISE 1: What method you used to make your peer download and upload
+#    files in parallel?  (~1-3 sentences)
+We used fork() to create a new process for each download and upload. Each child process will handle one download 
+and upload. The peer will handle all downloads in parallel and then handle all uploads in parallel.
+
+# EXERCISE 2A: What conditions did you find and fix that would have
+#    triggered a buffer overrun bug?  (~1-3 sentences each)
+Condition 1: When we are downloading a file, the code uses strcpy instead of strncpy
+to copy the filename over to our filename buffer. If the filename we are downloading
+is longer than FILENAMESIZ, this wil cause a buffer overrun. We fixed this by replacing
+strcpy with strncpy and then setting the maximum length as FILENAMESIZ. We then terminate
+the string will a NULL character.
+
+Condition 2: When another peer is attempting to download a file from us, in the function
+task_upload, we copy over the request, which is formatted as "GET %s OSP2P\n" into 
+task_buf and then we store the "%s" string into the task's filename buffer. However, if 
+the filename passed in is too long, this will cause a buffer overrun. We fix this by 
+checking the size of the request before we copy over the filename and if it is too
+long then we reject the peer and move on to a different peer.
+
+# EXERCISE 2B: What other robustness problems did you fix?  (~1-3 sentences
+#    each)
+Problem 1: Endless peer memory usage
+When we try to download a file from another peer, the peer could send us an endless stream of 
+data which would take up all of our memory. To fix this, we fix the maximum file size
+at 1 Gigabyte. If the peer sends us more than 1GB of data, we abandon the peer and 
+try again with a different peer.
+
+Problem 2: Unauthorized access to files in other directories
+The current skeleton code does not prevent other peers from requesting files outside of
+the current directory. This means another peer can potentially upload any file from
+our machine. To fix this we check that the filename does not have the '/' character
+which implies a directory path.
+
+Problem 3: Limited task_buffer size
+When we connect to the popular tracker, the program crashes because we do not have
+enough memory to handle all of the peers. We fixed this problem by increasing
+the TASKBUFSIZ to 100 kilobytes, so that we will allocate enough memory to handle
+all peers. This is an inefficient solution, and will have to be altered if we end 
+up using too much memory.
+
+Problem 4: Extremely slow peers
+Some peers transfer data at an extremely slow rate. This could cause one of the processes
+to take a very long time, thereby causing the program to hang. We fixed this
+by taking a sample of the first ten data transfers, and checking to see 
+if they are above the minimum rate, which we set to be 100 bytes per read.
+If the rate is not met, we abandon the peer and seek another one. 
+
+
+
+# EXERCISE 3: Describe the attacks you implemented for "evil mode".  Why
+#    are they attacks?  (~3-10 sentences each)
+We defined a macro, UPLOAD_ATTACK, so that the user can choose between which 
+upload attack the evil peer will execute. A value of 0 for UPLOAD_ATTACK will 
+choose attack 1 and a value of 1 will choose attack 2.
+
+Attack 1: The first attack occurs when we are uploading a file to another peer.
+It is a denial of service attack because we simply enter into an infinite
+loop and cause the peer to hang endlessly. This will deny the client from
+downloading other files as it waits for this one to finish, but it never will, and
+it also wastes CPU time.
+
+Attack 2:
+The second attack is an integrity attack. If another peer requests a certain file, 
+this attack will switch the contents of that file with that of a "virus file" and
+write that to the peer instead. Currently, the contents simply say "IMAVIRUS", but
+that can be changed to be malicious code or a virus that the client will then download
+onto their machine. This code could potentially harm the victim.
+
+Attack 3:
+The third attack occurs when we are trying to download a file from another peer. If we are 
+in evil_mode, then we will send them a request for a file whose name exceeds that of FILENAMESIZ.
+This will exploit the buffer overrun bug mentioned above in the other peer's task_upload function.
+This could be used to crash their machine or inject malicious code into their system.
+
+# Extra credit problems
+#Extra credit problem: none
+
+# Add any other information you'd like us to know below this line.

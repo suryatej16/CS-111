@@ -1,0 +1,1 @@
+Link to the project specifications: http://www.read.cs.ucla.edu/111/lab4
